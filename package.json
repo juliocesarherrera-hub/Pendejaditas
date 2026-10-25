@@ -11,7 +11,8 @@
     "check:backend": "node scripts/check-supabase.mjs",
     "test:integration": "node scripts/integration.mjs",
     "test:meetings": "node scripts/meetings-integration.mjs",
-    "test:sql": "node scripts/check-sql.mjs",
+    "test:chat": "node scripts/chat-integration.mjs",
+    "test:sql": "node scripts/check-sql.mjs && node scripts/check-chat-sql.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

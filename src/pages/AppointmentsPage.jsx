@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CalendarDays, ExternalLink, RefreshCw } from 'lucide-react';
 import { EmptyState } from '../components/EmptyState';
+import { chat } from '../lib/chat';
 import { googleMapsUrl } from '../data/meetingPlaces';
 import { appointmentActions, changeAppointment, fetchMeetings, formatMeetingTime, isPrevious, meetingStatus, mexicoInput, respondExchange } from '../lib/meetings';
 
@@ -13,7 +14,7 @@ function ProposalForm({ places, selectedPlace, exchange, appointment, busy, onPr
   </form>;
 }
 
-export function AppointmentsPage({ user, navigate, selectedPlace }) {
+export function AppointmentsPage({ user, navigate, selectedPlace, exchangeId }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -44,12 +45,12 @@ export function AppointmentsPage({ user, navigate, selectedPlace }) {
     finally { setBusy(false); }
   }
   const propose = (id, revision, placeId, time) => run(() => changeAppointment(id,'propose',revision,placeId,time), 'Propuesta guardada. Falta la aceptación de la otra persona.');
-  const visible = data?.exchanges.filter((exchange) => isPrevious(exchange,data.appointments.find((entry) => entry.exchange_id === exchange.id),clock.now) === (tab === 'previous')) || [];
+  const visible = data?.exchanges.filter((exchange) => exchangeId ? exchange.id === exchangeId : isPrevious(exchange,data.appointments.find((entry) => entry.exchange_id === exchange.id),clock.now) === (tab === 'previous')) || [];
   return <>
     <section className="page-heading"><h1>Mis citas<span className="heading-dot">.</span></h1><p>Acuerdos privados entre los participantes. Ninguna cita genera un pago o confirma una entrega.</p></section>
     <div className="meeting-disclaimer demo-notice"><CalendarDays size={22} /><p>Primero el vendedor acepta la solicitud de intercambio. Quien propone acepta su propuesta; la otra persona debe confirmarla. Reprogramar exige una nueva aceptación. Cualquiera puede cancelar antes de la hora prevista, sin cargos. Las citas pasadas quedan solo como historial, sin marcar entregas.</p></div>
     <div className="appointments-toolbar"><div className="category-list"><button className={tab === 'pending' ? 'active' : ''} onClick={() => setTab('pending')} aria-pressed={tab === 'pending'}>Pendientes</button><button className={tab === 'previous' ? 'active' : ''} onClick={() => setTab('previous')} aria-pressed={tab === 'previous'}>Anteriores</button></div><button className="secondary-button" onClick={refresh} disabled={busy}><RefreshCw size={16} /> Actualizar</button><button className="secondary-button" onClick={() => navigate('meeting-points')}>Ver mapa de lugares</button></div>
-    {error && <p className="field-error" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
+    {exchangeId && <button className="back-button" onClick={() => navigate('appointments')}>Ver todas mis citas</button>}{error && <p className="field-error" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
     {!data && !error && <p role="status">Cargando citas privadas…</p>}
     {data && !visible.length && <EmptyState title={tab === 'previous' ? 'Todavía no hay citas anteriores' : 'Sin citas pendientes'} description="Para comenzar, abre un artículo de otra cuenta y solicita un intercambio. El vendedor lo verá aquí." action="Explorar artículos" onAction={() => navigate('home')} />}
     <div className="appointment-list">{visible.map((exchange) => {
@@ -59,6 +60,7 @@ export function AppointmentsPage({ user, navigate, selectedPlace }) {
       const canRespond = appointment?.status === 'proposed' && appointment.proposed_by !== user.id;
       const events = data.events.filter((event) => event.exchange_id === exchange.id);
       return <article key={exchange.id} className="appointment-card"><div className="section-heading"><div><span className="neutral-badge">{user.id === exchange.seller_id ? 'Eres el vendedor' : 'Eres el comprador'}</span><h2>{exchange.product_title}</h2></div><span className={`appointment-status ${appointment?.status === 'confirmed' ? 'confirmed' : ''}`}>{previous && appointment?.status !== 'cancelled' && new Date(appointment?.starts_at).getTime() <= clock.now ? 'Fecha anterior · sin entrega verificada' : meetingStatus[appointment?.status || exchange.status]}</span></div>
+      {['pending','accepted'].includes(exchange.status) && <button className="secondary-button" disabled={busy} onClick={() => run(async () => { const id = await chat.open(exchange.id); navigate(`messages/${id}`); },'')}>Abrir chat del intercambio</button>}
       {exchange.status === 'pending' && <><p>La solicitud no es una compra ni una reserva. El vendedor debe aceptarla antes de acordar una cita.</p><div className="place-actions">{user.id === exchange.seller_id ? <><button className="primary-button" disabled={busy} onClick={() => run(() => respondExchange(exchange.id,'accept'),'Solicitud aceptada. Ya pueden proponer una cita.')}>Aceptar intercambio</button><button className="secondary-button" disabled={busy} onClick={() => run(() => respondExchange(exchange.id,'reject'),'Solicitud rechazada.')}>Rechazar</button></> : <button className="secondary-button" disabled={busy} onClick={() => run(() => respondExchange(exchange.id,'cancel'),'Solicitud cancelada.')}>Cancelar solicitud</button>}</div></>}
       {appointment && <div className="appointment-details"><h3>{place?.name || 'Lugar no disponible'}</h3><p>{place?.address}</p><strong>{formatMeetingTime(appointment.starts_at)} · Querétaro</strong><p>Propuesta por {appointment.proposed_by === user.id ? 'ti' : 'la otra persona'} · Revisión {appointment.revision}</p>{place && <a className="secondary-button" href={googleMapsUrl(place)} target="_blank" rel="noopener noreferrer">Ver en Google Maps <ExternalLink size={15} /></a>}</div>}
       {!previous && exchange.status === 'accepted' && <><div className="place-actions">{canRespond && <><button className="primary-button" disabled={busy} onClick={() => run(() => changeAppointment(exchange.id,'accept',appointment.revision),'Cita confirmada por ambas partes.')}>Aceptar lugar y hora</button><button className="secondary-button" disabled={busy} onClick={() => run(() => changeAppointment(exchange.id,'reject',appointment.revision),'Propuesta rechazada. Pueden proponer otra fecha o lugar.')}>Rechazar propuesta</button></>}{appointment && <><button className="secondary-button" onClick={() => setEditing(editing === exchange.id ? null : exchange.id)} disabled={busy}>{editing === exchange.id ? 'Cerrar formulario' : 'Reprogramar'}</button><button className="text-button delete-button" disabled={busy} onClick={() => { if (window.confirm('¿Cancelar esta cita? No genera cargos. Para intentarlo de nuevo deberán iniciar otra solicitud.')) run(() => changeAppointment(exchange.id,'cancel',appointment.revision),'Cita cancelada. No se realizó ningún movimiento de dinero.'); }}>Cancelar cita</button></>}</div>{(!appointment || editing === exchange.id) && <ProposalForm key={`${exchange.id}-${appointment?.revision || 0}-${selectedPlace || ''}`} places={data.places} selectedPlace={selectedPlace} exchange={exchange} appointment={appointment} busy={busy} onPropose={propose} />}</>}

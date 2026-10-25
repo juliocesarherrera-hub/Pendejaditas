@@ -11,6 +11,7 @@ import { validateConfig } from '../src/lib/config.js';
 import { confirmsDeletion } from '../src/lib/storage-result.js';
 import './marketplace-checks.mjs';
 import './check-sql.mjs';
+import './check-chat-sql.mjs';
 import { meetingPlaces, googleMapsUrl } from '../src/data/meetingPlaces.js';
 import { mexicoTimeInput, previousMeeting } from '../src/utils/meeting-time.js';
 
@@ -127,6 +128,18 @@ try {
   assert.ok(points.includes('no son puntos seguros oficiales'));
   const {AppointmentsPage} = await server.ssrLoadModule('/src/pages/AppointmentsPage.jsx');
   assert.ok(render(AppointmentsPage, {user:{id:'unit-test'},navigate:noop}).includes('Cargando citas privadas'));
+  const {MessagesPage} = await server.ssrLoadModule('/src/pages/MessagesPage.jsx');
+  const inbox = {rows:[],error:'',connection:'live',refresh:noop};
+  assert.ok(render(MessagesPage,{user:{id:'unit-test'},navigate:noop,inbox}).includes('Todavía no tienes conversaciones'));
+  assert.ok(render(MessagesPage,{user:{id:'unit-test'},id:'unknown',navigate:noop,inbox}).includes('Conversación no disponible'));
+  const entry={conversation_id:'unit-conversation',other_user_id:'other',other_name:'<script>unsafe</script>',product_title:'Artículo de prueba de render',communication_allowed:true,last_read_sequence:0,unread_count:2};
+  const conversation=render(MessagesPage,{user:{id:'unit-test'},id:entry.conversation_id,navigate:noop,inbox:{...inbox,rows:[entry]}});
+  assert.ok(conversation.includes('&lt;script&gt;unsafe&lt;/script&gt;'));
+  assert.ok(!conversation.includes('<script>unsafe'));
+  assert.ok(conversation.includes('2 mensajes no leídos'));
+  assert.ok(conversation.includes('Voz pendiente')&&conversation.includes('disabled'));
+  assert.ok(conversation.includes('Enviar mensaje')&&conversation.includes('Bloquear')&&conversation.includes('Reportar'));
+  console.log('OK: chat vacío/privado, nombres escapados, no leídos y voz pendiente sin simulación.');
   await backend.supabase?.auth.stopAutoRefresh();
   console.log('OK: catálogo vacío, estados de conexión, formularios Auth, propietario/visitante, navegación y pagos deshabilitados.');
 } finally { await server.close(); }

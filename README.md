@@ -23,9 +23,12 @@ npm run build
 npm run preview
 npm run test:sql
 npm run test:meetings
+npm run test:chat
 ```
 
 El frontend requiere en `.env.local` las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Nunca utilices claves secretas en variables VITE_. `.env.example` contiene solo los nombres, sin valores. Reinicia Vite tras editar el archivo.
+
+La etapa 4 incorpora chat privado persistente y Realtime, no leídos, bloqueos/reportes y enlaces al intercambio y cita. Migración 004 instalada; `user_blocks` debe permanecer fuera de la publicación Realtime. Instrucciones, resultados de 22 pruebas A/B/C y configuración pendiente de voz en [docs/ETAPA-4.md](docs/ETAPA-4.md). Las llamadas no están habilitadas y su botón lo indica.
 
 `check:backend` comprueba sin imprimir valores si la migración responde y el catálogo es accesible. `npm test` verifica validaciones y renderizado local; no prueba cuentas remotas. Para probar RLS y Storage con dos cuentas confirmadas, consulta las instrucciones de `npm run test:integration` en la guía.
 
