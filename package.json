@@ -14,7 +14,10 @@
     "test:chat": "node scripts/chat-integration.mjs",
     "test:auctions": "node scripts/auctions-integration.mjs",
     "test:auctions:clock": "node scripts/auction-clock-integration.mjs",
-    "test:sql": "node scripts/check-sql.mjs && node scripts/check-chat-sql.mjs && node scripts/check-auction-sql.mjs",
+    "test:deliveries:setup": "node scripts/delivery-setup.mjs",
+    "test:deliveries": "node scripts/delivery-integration.mjs",
+    "test:deliveries:security": "node scripts/delivery-final-security.mjs",
+    "test:sql": "node scripts/check-sql.mjs && node scripts/check-chat-sql.mjs && node scripts/check-auction-sql.mjs && node scripts/check-delivery-sql.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -22,6 +25,8 @@
     "@supabase/supabase-js": "^2.118.0",
     "leaflet": "1.9.4",
     "lucide-react": "^1.61.0",
+    "qr-scanner": "1.4.2",
+    "qrcode": "1.5.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

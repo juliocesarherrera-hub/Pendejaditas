@@ -3,7 +3,7 @@ const links = [{ id: 'home', label: 'Explorar', icon: Compass }, { id: 'auctions
 export function Layout({ children, page, navigate, favoritesCount, user, connected, unread = 0 }) {
   return <div className="app-shell">
     <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); document.getElementById('main-content')?.focus(); }}>Saltar al contenido</a>
-    <div className="demo-bar"><span>{connected ? 'Publicaciones conectadas a Supabase.' : 'Plataforma en configuración.'}</span> Compras y pagos aún no disponibles. <span className="demo-phase">Etapa 5 <ArrowUpRight size={12} /></span></div>
+    <div className="demo-bar"><span>{connected ? 'Publicaciones conectadas a Supabase.' : 'Plataforma en configuración.'}</span> Compras y pagos aún no disponibles. <span className="demo-phase">Etapa 6 <ArrowUpRight size={12} /></span></div>
     <header className="site-header"><div className="header-inner">
       <a className="wordmark" href="#home" aria-label="Pendejaditas, inicio">pendejaditas<span>.</span></a>
       <span className="location"><MapPin size={15} /> Querétaro, MX</span>

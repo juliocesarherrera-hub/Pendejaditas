@@ -14,6 +14,8 @@ import './check-sql.mjs';
 import './check-chat-sql.mjs';
 import './check-auction-sql.mjs';
 import './auction-contract-checks.mjs';
+import './check-delivery-sql.mjs';
+import './delivery-contract-checks.mjs';
 import {serverClock,serverNow,remainingTime} from '../src/utils/auction-time.js';
 import {validateAuctionRules} from '../src/lib/auction-validation.js';
 const clockFixture=serverClock('2026-10-24T20:00:00Z',100);
@@ -159,6 +161,17 @@ try {
   assert.ok(render(AuctionPanel,{product:{auction:{id:'fixture'}},navigate:noop}).includes('Cargando subasta desde el servidor'));
   const {NotificationsPage}=await server.ssrLoadModule('/src/pages/NotificationsPage.jsx');
   assert.ok(render(NotificationsPage,{notifications:{rows:[]},navigate:noop}).includes('Todavía no tienes avisos'));
+  const {DeliveriesPage,DeliveryDetail}=await server.ssrLoadModule('/src/pages/DeliveriesPage.jsx');
+  assert.ok(render(DeliveriesPage,{user:{id:'unit-test'},navigate:noop}).includes('Cargando entregas privadas'));
+  const delivery=render(DeliveryDetail,{id:'unit-operation',user:{id:'unit-test'},navigate:noop});
+  assert.ok(delivery.includes('Consultando entrega privada'));
+  assert.ok(!delivery.includes('Entrega registrada por ambas partes'));
+  const {DeliveryScanner}=await server.ssrLoadModule('/src/components/DeliveryScanner.jsx');
+  const scanner=render(DeliveryScanner,{operationId:'unit-operation',onDecoded:noop});
+  assert.ok(scanner.includes('Abrir cámara')&&scanner.includes('Leer imagen local'));
+  assert.ok(scanner.includes('Escanear no confirma nada'));
+  assert.ok(scanner.includes('hidden=""'));
+  console.log('OK: entregas sin éxito supuesto, lector con inicio explícito, alternativa local y video oculto antes del permiso.');
   await backend.supabase?.auth.stopAutoRefresh();
   console.log('OK: catálogo vacío, estados de conexión, formularios Auth, propietario/visitante, navegación y pagos deshabilitados.');
 } finally { await server.close(); }

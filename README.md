@@ -4,6 +4,8 @@ Marketplace de gaming y coleccionables en Querétaro, construido sobre React, Vi
 
 ## Etapa actual
 
+La etapa 6 conecta entrega QR temporal, de un solo uso y doble confirmación, cámara/imagen local, reportes privados e historial. **El comprador muestra el QR y el vendedor lo escanea; el comprador confirma después.** Migración 006 instalada y 22 comprobaciones remotas A/B/C aprobadas. Sin pagos ni liberación de dinero. Instrucciones y limitaciones de dispositivos en [docs/ETAPA-6-ENTREGAS.md](docs/ETAPA-6-ENTREGAS.md).
+
 La etapa 5 conecta **subastas reales sin pagos**: publicación, pujas atómicas, Realtime, anti-snipe, Cron, ganador provisional, avisos privados y coordinación por chat/citas. Migración 005 instalada; no repetir. Pasaron 21 comprobaciones remotas con A/B/C. Consulta [docs/ETAPA-5-SUBASTAS.md](docs/ETAPA-5-SUBASTAS.md) para crear una subasta, las reglas y límites de las pruebas.
 
 La etapa 3 añade **Puntos de encuentro** y **Mis citas**: mapa Leaflet con lugares activos de Supabase, enlaces específicos a Google Maps, solicitudes de intercambio y propuestas privadas con aceptación, rechazo, reprogramación, cancelación e historial. Consulta [docs/ETAPA-3.md](docs/ETAPA-3.md) para las reglas y el estado de las pruebas. Los lugares son públicos sugeridos, no puntos seguros oficiales.

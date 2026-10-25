@@ -17,6 +17,7 @@ import { pageTitles, parseRoute, productRoute } from './utils/navigation';
 const MeetingPointsPage = lazy(() => import('./pages/MeetingPointsPage').then((module) => ({default:module.MeetingPointsPage})));
 const AppointmentsPage = lazy(() => import('./pages/AppointmentsPage').then((module) => ({default:module.AppointmentsPage})));
 const MessagesPage = lazy(() => import('./pages/MessagesPage').then((module) => ({default:module.MessagesPage})));
+const DeliveriesPage=lazy(()=>import('./pages/DeliveriesPage').then(module=>({default:module.DeliveriesPage})));
 
 function initialRoute() {
   return new URLSearchParams(window.location.search).get('flow') === 'recovery' ? { page: 'auth', id: 'reset' } : parseRoute(window.location.hash);
@@ -48,6 +49,7 @@ export default function App() {
   const loginPrompt = <EmptyState title="Tu cuenta abre la siguiente partida" description="Inicia sesión para publicar y administrar tus artículos." action="Iniciar sesión o registrarme" onAction={() => navigate('auth/login')} />;
   let content;
   if (route.page === 'auth') content = <AuthPage key={route.id} mode={['register','recover','reset'].includes(route.id) ? route.id : 'login'} user={auth.user} navigate={navigate} />;
+  else if(route.page==='deliveries')content=auth.loading?<p role="status">Recuperando sesión…</p>:!auth.user?loginPrompt:<DeliveriesPage key={auth.user.id} user={auth.user} id={route.id} navigate={navigate}/>;
   else if(route.page==='notifications')content=auth.loading?<p role="status">Recuperando sesión…</p>:!auth.user?loginPrompt:<NotificationsPage key={auth.user.id} notifications={auctionNotifications} navigate={navigate}/>;
   else if (route.page === 'messages') content = auth.loading ? <p role="status">Recuperando sesión…</p> : !auth.user ? loginPrompt : <MessagesPage key={auth.user.id} user={auth.user} id={route.id} navigate={navigate} inbox={inbox} />;
   else if (route.page === 'meeting-points') content = <MeetingPointsPage selectedPlace={selectedPlace} onSelect={setSelectedPlace} navigate={navigate} user={auth.user} />;
