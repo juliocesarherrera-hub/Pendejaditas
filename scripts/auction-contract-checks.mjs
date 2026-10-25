@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {createAuctionService} from '../src/lib/auctions-core.js';
+let calls=0;
+const denied=createAuctionService({rpc:async()=>{calls++;return {data:{accepted:false,code:'below_minimum',minimum:1200,server_time:'2026-10-24T20:00:00Z'},error:null};}});
+await assert.rejects(()=>denied.bid('fixture',1100,''));
+assert.equal(calls,0);
+const rejection=await denied.bid('fixture',1100,'fixture-nonce');
+assert.equal(rejection.accepted,false);
+assert.equal(rejection.minimum,1200);
+assert.ok(!rejection.message.includes('Puja registrada'));
+const malformed=createAuctionService({rpc:async()=>({data:null,error:null})});
+await assert.rejects(()=>malformed.bid('fixture',1100,'fixture-nonce'));
+const broken=createAuctionService({rpc:async()=>({data:null,error:{code:'42501'}})});
+await assert.rejects(()=>broken.bid('fixture',1100,'fixture-nonce'),/permiso/);
+const accepted=createAuctionService({rpc:async(name,args)=>{
+  assert.equal(name,'place_auction_bid');
+  assert.deepEqual(Object.keys(args).sort(),['p_amount','p_auction_id','p_client_nonce']);
+  return {data:{accepted:true,bid_id:'fixture-bid'},error:null};
+}});
+assert.equal((await accepted.bid('fixture',1200,'fixture-nonce')).accepted,true);
+console.log('OK: contrato de subastas no confunde HTTP 200 con puja aceptada, exige nonce y nunca envía identidad/hora/ganador desde el cliente. No sustituye pruebas remotas.');

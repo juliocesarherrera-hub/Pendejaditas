@@ -6,7 +6,7 @@ export function validateProduct(value) {
   if (typeof value.title !== 'string' || value.title.trim().length < 5 || value.title.trim().length > 90) throw new Error('El título debe tener entre 5 y 90 caracteres.');
   if (typeof value.description !== 'string' || value.description.trim().length < 15 || value.description.trim().length > 1500) throw new Error('La descripción debe tener entre 15 y 1500 caracteres.');
   if (!categories.includes(value.category) || !conditions.includes(value.condition) || !areas.includes(value.area)) throw new Error('Selecciona una categoría, estado y zona válidos.');
-  if (!['fixed', 'offers'].includes(value.type)) throw new Error('Las subastas todavía no están disponibles.');
+  if (!['fixed', 'offers'].includes(value.type)) throw new Error('Las subastas se publican mediante el formulario y las funciones específicas del servidor.');
   const price = Number(value.price);
   if (!Number.isInteger(price) || price < 1 || price > 1000000) throw new Error('El precio debe ser un número entero entre 1 y 1,000,000 MXN.');
   return { title: value.title.trim(), description: value.description.trim(), category: value.category, condition: value.condition, sale_type: value.type, price, area: value.area };

@@ -12,6 +12,18 @@ import { confirmsDeletion } from '../src/lib/storage-result.js';
 import './marketplace-checks.mjs';
 import './check-sql.mjs';
 import './check-chat-sql.mjs';
+import './check-auction-sql.mjs';
+import './auction-contract-checks.mjs';
+import {serverClock,serverNow,remainingTime} from '../src/utils/auction-time.js';
+import {validateAuctionRules} from '../src/lib/auction-validation.js';
+const clockFixture=serverClock('2026-10-24T20:00:00Z',100);
+assert.equal(serverNow(clockFixture,2100),Date.parse('2026-10-24T20:00:02Z'));
+assert.equal(remainingTime(61000,1000),'00:01:00');
+assert.equal(remainingTime(1000,1000),'Verificando cierre…');
+assert.equal(remainingTime(1000,NaN),'Sincronizando…');
+const auctionRules={price:'1000',increment:'100',duration:'24',terms:'Condiciones de una subasta de prueba.',delay:'0'};
+assert.equal(validateAuctionRules(auctionRules).minIncrement,100);
+for(const change of[{increment:'0'},{increment:'1.5'},{price:'-1'},{duration:'2'},{terms:'corto'},{delay:'-1'}])assert.throws(()=>validateAuctionRules({...auctionRules,...change}));
 import { meetingPlaces, googleMapsUrl } from '../src/data/meetingPlaces.js';
 import { mexicoTimeInput, previousMeeting } from '../src/utils/meeting-time.js';
 
@@ -100,10 +112,13 @@ try {
   assert.ok(home.includes('/images/playstation-5-640.webp'));
   assert.ok(!home.includes('PlayStation 5 · Edición digital'));
   assert.ok(render(HomePage, { ...shared, products: [], mode: 'home', connected: false }).includes('El catálogo no está disponible'));
-  assert.ok(render(HomePage, { ...shared, products: [], mode: 'auctions', connected: true }).includes('Subastas en desarrollo'));
+  assert.ok(render(HomePage, { ...shared, products: [], mode: 'auctions', connected: true }).includes('Pujas reales con reglas del servidor'));
   const publish = render(PublishPage, { onPublish: noop });
   assert.ok(publish.includes('Publicar artículo'));
-  assert.ok(publish.includes('disabled=""'));
+  assert.ok(publish.includes('Pujas reales, sin pagos.'));
+  const auctionForm=render(PublishPage,{onPublish:noop,existing:{title:'Artículo de prueba',type:'auction',price:1000}});
+  assert.ok(auctionForm.includes('Incremento mínimo (MXN)')&&auctionForm.includes('Condiciones públicas de la subasta'));
+  assert.ok(!auctionForm.includes('contador es ilustrativo'));
   assert.ok(!publish.includes('Publicar en mi demo'));
   for (const mode of ['login','register','recover','reset']) assert.ok(render(AuthPage, { mode, navigate: noop }).includes('<form'));
   const fixture = {...initialProducts[0], ownerId: 'owner-test'};
@@ -119,7 +134,7 @@ try {
     assert.ok(html.includes('Plataforma en configuración.'));
   }
   const app = render(App);
-  assert.ok(app.includes('Compras, pagos y pujas aún no disponibles.'));
+  assert.ok(app.includes('Compras y pagos aún no disponibles.'));
   assert.ok(!app.includes('Publicaciones conectadas a Supabase.'));
   const {MeetingPointsPage} = await server.ssrLoadModule('/src/pages/MeetingPointsPage.jsx');
   const points = render(MeetingPointsPage, {navigate: noop, onSelect: noop});
@@ -140,6 +155,10 @@ try {
   assert.ok(conversation.includes('Voz pendiente')&&conversation.includes('disabled'));
   assert.ok(conversation.includes('Enviar mensaje')&&conversation.includes('Bloquear')&&conversation.includes('Reportar'));
   console.log('OK: chat vacío/privado, nombres escapados, no leídos y voz pendiente sin simulación.');
+  const {AuctionPanel}=await server.ssrLoadModule('/src/components/AuctionPanel.jsx');
+  assert.ok(render(AuctionPanel,{product:{auction:{id:'fixture'}},navigate:noop}).includes('Cargando subasta desde el servidor'));
+  const {NotificationsPage}=await server.ssrLoadModule('/src/pages/NotificationsPage.jsx');
+  assert.ok(render(NotificationsPage,{notifications:{rows:[]},navigate:noop}).includes('Todavía no tienes avisos'));
   await backend.supabase?.auth.stopAutoRefresh();
   console.log('OK: catálogo vacío, estados de conexión, formularios Auth, propietario/visitante, navegación y pagos deshabilitados.');
 } finally { await server.close(); }

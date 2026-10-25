@@ -398,6 +398,49 @@ fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
 .meeting-navigation { max-width: 1280px; margin: auto; padding: 0 40px; display: flex; gap: 24px; flex-wrap: wrap; border-bottom: 1px solid #292929; }
 .meeting-navigation a { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; font-size: 13px; color: #bdbdbd; }
 .meeting-navigation a[aria-current=page] { color: #ff9b53; }
+.auction-panel { margin-top: 28px; padding-top: 24px; border-top: 1px solid #414141; min-width: 0; }
+.auction-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.auction-heading h2 { display: flex; align-items: center; gap: 8px; font-size: 21px; }
+.auction-heading > span { font-size: 11px; color: #bdbdbd; }
+.auction-state { color: #ffad73; font-size: 13px; margin-top: 16px; }
+.auction-price { display: grid; gap: 6px; margin-block: 20px; }
+.auction-price > span { font-size: 12px; color: #bbb; }
+.auction-price strong { font-size: clamp(26px,5vw,38px); color: #f4f4f4; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.auction-price small { font-size: 14px; color: #bdbdbd; }
+.auction-facts { display: grid; gap: 12px; font-size: 13px; }
+.auction-facts > div { display: flex; justify-content: space-between; gap: 16px; }
+.auction-facts dt { color: #bdbdbd; }
+.auction-facts dd { overflow-wrap: anywhere; text-align: right; }
+.auction-timer { display: grid; gap: 8px; margin-block: 24px 12px; color: #ffab70; }
+.auction-timer span { font-size: 12px; }
+.auction-timer strong { font-size: clamp(22px,5vw,32px); font-variant-numeric: tabular-nums; }
+.auction-panel .field-hint { line-height: 1.8; font-size: 12px; color: #bdbdbd; }
+.auction-panel .demo-notice { display: block; padding: 14px; background: #272119; color: #dfc5ad; border-radius: 8px; }
+.auction-bid-form { display: grid; gap: 12px; margin-block: 20px; }
+.auction-bid-form button { white-space: normal; text-align: center; }
+.auction-panel summary { cursor: pointer; min-height: 44px; padding-block: 14px; font-size: 13px; color: #ddd; }
+.auction-terms p { font-size: 13px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; color: #bdbdbd; }
+.auction-result { margin-block: 20px; padding-block: 18px; border-block: 1px solid #38764f; }
+.auction-result h3 { color: #7bdf9d; font-size: 17px; }
+.auction-result p { font-size: 13px; line-height: 1.8; margin-block: 12px; }
+.auction-history { margin-top: 24px; border-top: 1px solid #3a3a3a; padding-top: 20px; }
+.auction-history h3 { font-size: 18px; }
+.auction-history ol { list-style: none; padding: 0; }
+.auction-history li { padding-block: 14px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.auction-history time, .auction-notifications time { display: block; font-size: 11px; color: #bdbdbd; margin-top: 7px; }
+.auction-history strong { white-space: nowrap; }
+.detail-photo.auction-photo-frame { height: auto; max-height: none; aspect-ratio: auto; background: #202020; }
+.auction-photo-frame > img { width: 100%; height: 400px; object-fit: contain; }
+.auction-gallery { display: flex; gap: 10px; padding: 14px; overflow-x: auto; }
+.auction-gallery button { flex: 0 0 64px; border: 2px solid transparent; border-radius: 6px; overflow: hidden; }
+.auction-gallery button[aria-pressed=true] { border-color: #ff9145; }
+.auction-gallery img { width: 60px; height: 60px; object-fit: cover; }
+.auction-notification-link { display: flex; justify-content: flex-end; padding-bottom: 16px; font-size: 13px; }
+.auction-notification-link a { display: inline-flex; gap: 10px; align-items: center; min-height: 44px; color: #ffad73; }
+.auction-notifications { list-style: none; padding: 0; }
+.auction-notifications li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 18px; align-items: center; padding: 20px 0; border-bottom: 1px solid #3b3b3b; }
+.auction-notifications .neutral-badge { margin-top: 10px; }
+@media(max-width:600px) { .auction-photo-frame > img { height: 280px; } .auction-facts > div { flex-wrap: wrap; } .auction-history li { flex-wrap: wrap; } }
 .messages-layout { display: grid; grid-template-columns: minmax(240px,.7fr) minmax(0,1.5fr); border: 1px solid #363636; border-radius: 12px; overflow: hidden; min-height: 600px; }
 .conversation-list { min-width: 0; background: #191919; border-right: 1px solid #363636; }
 .conversation-list > h2 { font-size: 16px; padding: 24px; border-bottom: 1px solid #333; }

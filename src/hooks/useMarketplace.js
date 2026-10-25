@@ -23,9 +23,12 @@ export function useMarketplace() {
     void Promise.resolve().then(refresh);
     const onFocus = () => { if (!document.hidden) refresh(); };
     const timer = setInterval(onFocus, 30000);
+    let realtimeTimer;
+    const onAuction=()=>{clearTimeout(realtimeTimer);realtimeTimer=setTimeout(refresh,200);};
+    const channel=supabase?.channel('catalog-auctions').on('postgres_changes',{event:'*',schema:'public',table:'auctions'},onAuction).subscribe();
     window.addEventListener('focus', onFocus);
     const invalidate = () => { generation.current += 1; };
-    return () => { invalidate(); clearInterval(timer); window.removeEventListener('focus', onFocus); };
+    return () => { invalidate(); clearInterval(timer); clearTimeout(realtimeTimer); window.removeEventListener('focus', onFocus); if(channel)void supabase.removeChannel(channel); };
   }, [refresh]);
   return { products, ready, loading, error, refresh };
 }
