@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { validateConfig } from './config';
+import { fetchWithTimeout } from './fetch-timeout';
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 export const configError = validateConfig(url, key);
 export const supabase = configError ? null : createClient(url, key, {
+  global: {fetch: fetchWithTimeout},
   auth: { flowType: 'pkce', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
 

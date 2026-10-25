@@ -395,3 +395,48 @@ fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
 .seller-subtitle { display: block; margin-top: 5px; font-size: 11px; color: #aaa; }
 .demo-action > button { white-space: normal; text-align: center; }
 @media (max-width: 600px) { .auth-panel { margin-top: 0; } .profile-edit .primary-button { width: 100%; } }
+.meeting-navigation { max-width: 1280px; margin: auto; padding: 0 40px; display: flex; gap: 24px; flex-wrap: wrap; border-bottom: 1px solid #292929; }
+.meeting-navigation a { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; font-size: 13px; color: #bdbdbd; }
+.meeting-navigation a[aria-current=page] { color: #ff9b53; }
+.meeting-disclaimer { background: #211e18; border: 1px solid #4b4031; padding: 18px; border-radius: 10px; margin: 0 0 24px; }
+.meeting-filters { display: flex; gap: 18px; margin-bottom: 24px; }
+.meeting-filters > label:first-child { flex: 2; }
+.meeting-filters > label:last-child { flex: 1; }
+.meeting-points-layout { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); gap: 24px; align-items: start; }
+.meeting-map { position: relative; isolation: isolate; z-index: 0; height: 470px; border-radius: 12px; background: #262626; }
+.meeting-map .leaflet-control-attribution { font-size: 11px; }
+.meeting-map .leaflet-popup-content-wrapper, .meeting-map .leaflet-popup-tip { background: #1b1b1b; color: #eee; }
+.meeting-map .leaflet-popup-content { font-family: 'Segoe UI', sans-serif; line-height: 1.7; }
+.meeting-map .leaflet-popup-content p { margin: 8px 0 0; }
+.meeting-map .leaflet-control-zoom a { background: #1c1c1c; color: #fff; width: 44px; height: 44px; line-height: 44px; }
+.meeting-pin { display: flex; align-items: center; justify-content: center; background: #ff6b00; color: #17100a; border: 2px solid #121212; border-radius: 50%; font-size: 16px; font-weight: 800; }
+.meeting-pin.selected { background: #00c853; color: #121212; border-color: #121212; }
+.map-note { font-size: 12px; color: #aaa; line-height: 1.8; margin-top: 12px; }
+.place-list { display: grid; gap: 18px; }
+.place-card, .appointment-card { min-width: 0; background: #1b1b1b; border: 1px solid #363636; border-radius: 12px; padding: 24px; }
+.place-card.selected { border-color: #b76a32; }
+.place-card h2 { font-size: 21px; color: #f0f0f0; margin: 12px 0; }
+.place-card p, .appointment-card > p { font-size: 13px; line-height: 1.8; color: #bcbcbc; }
+.place-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+.place-actions > *, .request-exchange { white-space: normal; text-align: center; }
+.request-exchange { width: 100%; margin-top: 18px; }
+.appointments-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.appointments-toolbar .category-list { padding: 0; margin-right: auto; }
+.appointment-list { display: grid; gap: 24px; }
+.appointment-card .section-heading { flex-wrap: wrap; }
+.appointment-card h2 { margin-top: 12px; font-size: 22px; }
+.appointment-status { color: #ffb17b; font-size: 12px; padding: 8px; border: 1px solid #67503b; border-radius: 6px; }
+.appointment-status.confirmed { color: #77e5a5; border-color: #36794e; }
+.appointment-details { display: grid; justify-items: start; gap: 12px; padding-block: 18px; }
+.appointment-details h3 { font-size: 18px; font-weight: 600; }
+.appointment-details p { color: #aaa; font-size: 13px; line-height: 1.8; }
+.appointment-details strong { font-size: 16px; }
+.appointment-proposal { max-width: 600px; display: grid; gap: 18px; margin-top: 24px; padding-top: 24px; border-top: 1px solid #333; }
+.appointment-proposal h3 { font-size: 18px; font-weight: 600; }
+.appointment-proposal .field-hint { font-size: 12px; color: #aaa; line-height: 1.8; }
+.appointment-proposal button { justify-self: start; }
+.appointment-history { margin-top: 22px; border-top: 1px solid #333; padding-top: 16px; }
+.appointment-history summary { cursor: pointer; min-height: 44px; padding-block: 10px; color: #c7c7c7; font-size: 13px; }
+.appointment-history p { font-size: 12px; color: #aaa; line-height: 1.9; padding-block: 12px; }
+@media(max-width: 1023px) { .meeting-points-layout { grid-template-columns: minmax(0,1fr); } .meeting-map { height: 400px; } .meeting-navigation { padding-inline: 28px; } }
+@media(max-width: 600px) { .meeting-navigation { padding-inline: 20px; gap: 20px; } .meeting-navigation a { font-size: 12px; } .meeting-filters { flex-direction: column; } .meeting-map { height: 330px; } .place-card, .appointment-card { padding: 18px; } .place-actions { flex-direction: column; align-items: stretch; } .place-actions .primary-button, .place-actions .secondary-button { width: 100%; } .appointments-toolbar > .category-list { flex-basis: 100%; } .appointments-toolbar .secondary-button { flex: 1; white-space: normal; } }

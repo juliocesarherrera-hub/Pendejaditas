@@ -10,6 +10,22 @@ import { validateProduct, validateImage, validateProfile } from '../src/lib/vali
 import { validateConfig } from '../src/lib/config.js';
 import { confirmsDeletion } from '../src/lib/storage-result.js';
 import './marketplace-checks.mjs';
+import './check-sql.mjs';
+import { meetingPlaces, googleMapsUrl } from '../src/data/meetingPlaces.js';
+import { mexicoTimeInput, previousMeeting } from '../src/utils/meeting-time.js';
+
+assert.equal(mexicoTimeInput(new Date('2026-10-25T18:00:00Z')), '2026-10-25T12:00');
+assert.equal(mexicoTimeInput(new Date('2026-10-25T05:30:00Z')), '2026-10-24T23:30');
+assert.equal(previousMeeting({status: 'accepted'}, {status: 'confirmed', starts_at: '2026-10-25T18:00:00Z'}, Date.parse('2026-10-26T00:00:00Z')), true);
+assert.equal(previousMeeting({status: 'accepted'}, {status: 'proposed', starts_at: '2026-10-25T18:00:00Z'}, Date.parse('2026-10-24T00:00:00Z')), false);
+assert.equal(previousMeeting({status: 'cancelled'}, null), true);
+for (const place of meetingPlaces) {
+  const url = new URL(googleMapsUrl(place));
+  assert.equal(url.hostname, 'www.google.com');
+  assert.equal(url.searchParams.get('api'), '1');
+  assert.ok(url.searchParams.get('query').includes(place.name) && url.searchParams.get('query').includes(place.address));
+  assert.ok(place.latitude > 20 && place.latitude < 21 && place.longitude > -101 && place.longitude < -100);
+}
 
 assert.equal(confirmsDeletion({data: [], error: null}, 'owner/image.webp'), false);
 assert.equal(confirmsDeletion({data: [{name: 'owner/image.webp'}], error: null}, 'owner/image.webp'), true);
@@ -104,6 +120,13 @@ try {
   const app = render(App);
   assert.ok(app.includes('Compras, pagos y pujas aún no disponibles.'));
   assert.ok(!app.includes('Publicaciones conectadas a Supabase.'));
+  const {MeetingPointsPage} = await server.ssrLoadModule('/src/pages/MeetingPointsPage.jsx');
+  const points = render(MeetingPointsPage, {navigate: noop, onSelect: noop});
+  assert.ok(points.includes('Cargando lugares desde Supabase'));
+  assert.ok(points.includes('Mapa interactivo'));
+  assert.ok(points.includes('no son puntos seguros oficiales'));
+  const {AppointmentsPage} = await server.ssrLoadModule('/src/pages/AppointmentsPage.jsx');
+  assert.ok(render(AppointmentsPage, {user:{id:'unit-test'},navigate:noop}).includes('Cargando citas privadas'));
   await backend.supabase?.auth.stopAutoRefresh();
   console.log('OK: catálogo vacío, estados de conexión, formularios Auth, propietario/visitante, navegación y pagos deshabilitados.');
 } finally { await server.close(); }

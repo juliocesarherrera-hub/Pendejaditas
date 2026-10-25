@@ -4,6 +4,10 @@ Marketplace de gaming y coleccionables en Querétaro, construido sobre React, Vi
 
 ## Etapa actual
 
+La etapa 3 añade **Puntos de encuentro** y **Mis citas**: mapa Leaflet con lugares activos de Supabase, enlaces específicos a Google Maps, solicitudes de intercambio y propuestas privadas con aceptación, rechazo, reprogramación, cancelación e historial. Consulta [docs/ETAPA-3.md](docs/ETAPA-3.md) para las reglas y el estado de las pruebas. Los lugares son públicos sugeridos, no puntos seguros oficiales.
+
+Las migraciones de citas 002 y la corrección `202610240003_meetings_conflicts.sql` ya están aplicadas y se probaron con tres cuentas. No repitas migraciones aplicadas ni borres tablas. La corrección evita que los conflictos de revisión usen el código reservado 40001.
+
 La etapa 2 incorpora Supabase Auth, perfiles públicos, publicaciones compartidas y fotografías en Storage. Las tablas y el bucket ya existen: no repitas la migración completa ni borres información. La revisión de las definiciones y las 15 comprobaciones remotas con dos cuentas resultaron favorables: consulta [docs/AUDITORIA-SUPABASE.md](docs/AUDITORIA-SUPABASE.md). Configuración, instrucciones y límites en [docs/ETAPA-2.md](docs/ETAPA-2.md).
 
 No hay compras, pagos, ofertas operativas o pujas reales. Los botones monetarios están deshabilitados. El catálogo no usa productos ficticios ni recupera las antiguas publicaciones locales como si fueran reales. Los favoritos siguen siendo locales y están etiquetados como tales.
@@ -17,6 +21,8 @@ npm run lint
 npm test
 npm run build
 npm run preview
+npm run test:sql
+npm run test:meetings
 ```
 
 El frontend requiere en `.env.local` las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. Nunca utilices claves secretas en variables VITE_. `.env.example` contiene solo los nombres, sin valores. Reinicia Vite tras editar el archivo.
