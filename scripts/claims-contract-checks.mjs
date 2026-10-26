@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';import {createClaimsService,validateClaim} from '../src/lib/claims-core.js';import {validateEvidenceBytes,evidenceSha256} from '../supabase/functions/_shared/evidence-validation.js';
+const id='00000000-0000-4000-8000-000000000001';
+const value={exchangeId:id,targetId:id,targetKind:'publication',reason:'not_as_described',body:'Descripción de una reclamación para comprobar el contrato local.',nonce:id};
+assert.equal(validateClaim(value).reason,'not_as_described');for(const change of[{reason:'__proto__'},{targetKind:'unknown'},{body:'corto'},{nonce:''}])assert.throws(()=>validateClaim({...value,...change}));
+let called=0;const denied=createClaimsService({rpc:async(name,args)=>{called++;assert.equal(name,'open_claim');assert.ok(!('user_id'in args)&&!('role'in args)&&!('created_at'in args));return {data:{ok:false,code:'unavailable'},error:null};}});
+const result=await denied.open(value);assert.equal(result.ok,false);assert.equal(result.requiresRefresh,true);assert.equal(called,1);
+const noMfa=createClaimsService({rpc:async()=>({data:null,error:null})});assert.equal(await noMfa.myRole(),null);
+const forgedSeal=createClaimsService({functions:{invoke:async()=>({data:{ok:false},error:null})}});await assert.rejects(()=>forgedSeal.sealEvidence(id));
+const byteFixture=new Uint8Array([0,255,128,13,10]);
+const binaryDownload=createClaimsService({functions:{invoke:async()=>({data:new Blob([byteFixture]),response:new Response(null,{headers:{'X-Evidence-Type':'image/png'}}),error:null})}});
+const downloaded=await binaryDownload.downloadEvidence(id);assert.equal(downloaded.type,'image/png');assert.deepEqual(new Uint8Array(await downloaded.arrayBuffer()),byteFixture);
+await assert.rejects(()=>createClaimsService({functions:{invoke:async()=>({data:'not binary',error:null})}}).downloadEvidence(id));
+const pdf=new TextEncoder().encode('%PDF-test only');assert.equal(validateEvidenceBytes(pdf,'application/pdf'),'application/pdf');assert.throws(()=>validateEvidenceBytes(pdf,'image/png'));assert.throws(()=>validateEvidenceBytes(new Uint8Array(5242881),'image/png'));assert.throws(()=>validateEvidenceBytes(new TextEncoder().encode('<svg/>'),'image/png'));
+const before=await evidenceSha256(pdf),changed=pdf.slice();changed[6]^=1;assert.notEqual(await evidenceSha256(changed),before);assert.match(before,/^[0-9a-f]{64}$/);
+console.log('OK: rechazos no son éxito, no se envía identidad/rol/hora, MFA ausente no habilita panel, sellado no confirmado falla y hash/tipo/tamaño se validan localmente. No se probaron autenticidad, malware ni permisos remotos.');

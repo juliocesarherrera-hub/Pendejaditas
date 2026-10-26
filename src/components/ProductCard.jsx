@@ -15,7 +15,9 @@ export function Countdown({ endsAt, clock, status, startsAt }) {
 }
 export function SaleBadge({ type }) {
   const Icon = type === 'auction' ? Gavel : type === 'offers' ? MessageCircle : Tag;
-  return <span className={`sale-badge ${type}`}><Icon size={12} />{saleTypes[type]}</span>;
+  // Sale modes are domain values, not Tailwind utilities (`fixed` positions
+  // an element relative to the viewport and detaches it while scrolling).
+  return <span className={`sale-badge sale-badge--${type}`}><Icon size={12} />{saleTypes[type]}</span>;
 }
 export function ProductCard({ product, favorites, toggleFavorite, openProduct, previewMode = false }) {
   const saved = favorites.includes(product.id);

@@ -1,0 +1,9 @@
+import {useCallback,useState} from 'react';
+import {supabase} from '../lib/supabase';
+import {claims,claimQuery,requireClaimSuccess,claimTime} from '../lib/claims';
+import {usePrivateLoad} from '../hooks/usePrivateClaimLoad';
+export function ClaimChatEvidence({claimId,exchangeId,busy,run}){
+ const load=useCallback(async()=>{const cv=await claimQuery(supabase.from('chat_conversations').select('id').eq('exchange_id',exchangeId).maybeSingle());return cv?claimQuery(supabase.from('chat_messages').select('id,body,created_at').eq('conversation_id',cv.id).order('sequence',{ascending:false}).limit(50)):[];},[exchangeId]);
+ const state=usePrivateLoad(load),[message,setMessage]=useState('');
+ return <section className="claim-section"><h2>Un mensaje del chat como prueba</h2><p>Selecciona un mensaje de esta operación. El servidor conserva su texto, autor y fecha originales. Moderación solo recibe el mensaje que adjuntes.</p>{state.error&&<p className="field-error" role="alert">{state.error}</p>}{!state.data&&!state.error&&<p role="status">Consultando tus mensajes…</p>}{state.data&&<form className="claim-form" onSubmit={event=>{event.preventDefault();run(async()=>{requireClaimSuccess(await claims.attachMessage(claimId,message,crypto.randomUUID()));setMessage('');});}}><label>Últimos 50 mensajes<select required value={message} onChange={event=>setMessage(event.target.value)} disabled={busy||!state.data.length}><option value="">Selecciona un mensaje</option>{state.data.map(row=><option key={row.id} value={row.id}>{claimTime(row.created_at)} · {row.body.slice(0,90)}</option>)}</select></label>{message&&<p className="claim-body">{state.data.find(row=>row.id===message)?.body}</p>}<button className="secondary-button" disabled={busy||!message}>Adjuntar mensaje original</button>{!state.data.length&&<p>No hay mensajes disponibles en esta conversación.</p>}</form>}</section>;
+}

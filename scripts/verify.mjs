@@ -16,6 +16,10 @@ import './check-auction-sql.mjs';
 import './auction-contract-checks.mjs';
 import './check-delivery-sql.mjs';
 import './delivery-contract-checks.mjs';
+import './check-claims-sql.mjs';
+import './claims-contract-checks.mjs';
+import './claims-ui-contract-checks.mjs';
+import './claim-evidence-handler-checks.mjs';
 import {serverClock,serverNow,remainingTime} from '../src/utils/auction-time.js';
 import {validateAuctionRules} from '../src/lib/auction-validation.js';
 const clockFixture=serverClock('2026-10-24T20:00:00Z',100);
@@ -125,6 +129,19 @@ try {
   for (const mode of ['login','register','recover','reset']) assert.ok(render(AuthPage, { mode, navigate: noop }).includes('<form'));
   const fixture = {...initialProducts[0], ownerId: 'owner-test'};
   const detail = render(ProductPage, {...shared, product: fixture, user: {id: 'owner-test'}});
+  const {SaleBadge,ProductCard}=await server.ssrLoadModule('/src/components/ProductCard.jsx');
+  // Regression: a sale mode must never become a positioning utility. The same
+  // badge is shared by the catalog, publication preview and product detail.
+  const positioningUtilities=new Set(['fixed','sticky','absolute','relative','static']);
+  for(const type of ['fixed','offers','auction']){
+    const badge=render(SaleBadge,{type}),classes=badge.match(/class="([^"]+)"/)[1].split(/\s+/);
+    assert.ok(classes.every(value=>!positioningUtilities.has(value)),'Sale badge must stay in normal document flow');
+    const product={...fixture,type};
+    const detailHtml=render(ProductPage,{...shared,product,user:{id:'owner-test'}});
+    assert.ok(detailHtml.includes(badge));
+    for(const previewMode of [false,true])assert.ok(render(ProductCard,{...shared,product,previewMode}).includes(badge));
+  }
+  console.log('OK: precio fijo, ofertas y subasta no reciben clases de posicionamiento en detalle, catálogo ni vista previa.');
   assert.ok(detail.includes('Editar mi publicación'));
   assert.ok(!render(ProductPage, {...shared, product: fixture, user: {id: 'other-test'}}).includes('Editar mi publicación'));
   assert.ok(detail.includes('disabled=""'));
@@ -172,6 +189,32 @@ try {
   assert.ok(scanner.includes('Escanear no confirma nada'));
   assert.ok(scanner.includes('hidden=""'));
   console.log('OK: entregas sin éxito supuesto, lector con inicio explícito, alternativa local y video oculto antes del permiso.');
+  const {ClaimsPage}=await server.ssrLoadModule('/src/pages/ClaimsPage.jsx');
+  const {ModerationPage}=await server.ssrLoadModule('/src/pages/ModerationPage.jsx');
+  const claimProps={user:{id:'unit-test'},navigate:noop};
+  assert.ok(render(ClaimsPage,claimProps).includes('Cargando reclamaciones privadas'));
+  assert.ok(render(ClaimsPage,{...claimProps,id:'new'}).includes('Consultando tus operaciones'));
+  const {NewClaimForm}=await server.ssrLoadModule('/src/components/NewClaimForm.jsx');
+  const emptyClaimForm=render(NewClaimForm,{ready:true,busy:false,onSubmit:noop,onOpenExisting:noop});
+  assert.ok(emptyClaimForm.includes('Describe qué ocurrió')&&emptyClaimForm.includes('Enviar mi versión y abrir el caso'));
+  assert.ok(emptyClaimForm.includes('No tienes operaciones disponibles'));
+  const selectedClaimForm=render(NewClaimForm,{ready:true,initialExchangeId:'fixture',exchanges:[{id:'fixture',product_id:'product',product_title:'Artículo'}],onSubmit:noop,onOpenExisting:noop});
+  assert.ok(selectedClaimForm.includes('value="publication:product" selected=""'));
+  const existingClaimForm=render(NewClaimForm,{ready:true,initialExchangeId:'fixture',exchanges:[{id:'fixture',product_id:'product',product_title:'Artículo'}],existing:[{id:'case',exchange_id:'fixture',target_kind:'publication',target_id:'product',status:'open'}],onSubmit:noop,onOpenExisting:noop});
+  assert.ok(existingClaimForm.includes('Abrir reclamación existente'));
+  const {Feedback}=await server.ssrLoadModule('/src/pages/ClaimsPage.jsx');
+  const {ClaimHoldPanel}=await server.ssrLoadModule('/src/components/ClaimHoldPanel.jsx');
+  const holdsHtml=render(ClaimHoldPanel,{claimId:'fixture',holds:[{id:'hold-one',scope:'exchange',active:true,expires_at:'2026-10-25T13:00:00Z',reason:'Pausa técnica'},{id:'hold-two',scope:'exchange',active:true,expires_at:'2026-10-25T13:00:00Z',reason:'Segunda pausa técnica'}],serverTime:'2026-10-25T12:00:00Z',run:noop});
+  assert.ok(holdsHtml.includes('hold-one')&&holdsHtml.includes('hold-two'));
+  assert.equal((holdsHtml.match(/<button[^>]*>Retirar esta pausa<\/button>/g)||[]).length,2);
+  assert.ok(holdsHtml.includes('Ya hay una pausa vigente que cubre este alcance'));
+  assert.match(holdsHtml,/<button[^>]*disabled=""[^>]*>Aplicar pausa con vencimiento<\/button>/);
+  assert.ok(render(Feedback,{state:{refreshing:true,refresh:noop}}).includes('Actualizando…'));
+  assert.ok(render(Feedback,{state:{notice:'Información actualizada desde el servidor.',refresh:noop}}).includes('role="status"'));
+  assert.ok(render(ClaimsPage,{...claimProps,id:'private-id'}).includes('Cargando expediente privado'));
+  const moderation=render(ModerationPage,claimProps);assert.ok(moderation.includes('Verificando autorización y segundo factor'));
+  assert.ok(!moderation.includes('Registrar resolución'));
+  console.log('OK: reclamaciones y moderación esperan autorización real; no muestran expedientes ficticios ni acciones administrativas sin permiso.');
   await backend.supabase?.auth.stopAutoRefresh();
   console.log('OK: catálogo vacío, estados de conexión, formularios Auth, propietario/visitante, navegación y pagos deshabilitados.');
 } finally { await server.close(); }
