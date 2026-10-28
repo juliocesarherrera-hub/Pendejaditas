@@ -3,7 +3,9 @@ import { createMarketplace } from './marketplace-core';
 export { productColumns } from './marketplace-core';
 import {fetchAuctionRows} from './auctions';
 import {serverClock} from '../utils/auction-time';
+import {createProductLookup} from './product-detail';
 const marketplace=createMarketplace(supabase);
+export const fetchProductById=createProductLookup(supabase);
 export const { serviceError, toProduct, fetchProfile, saveProduct, deleteProduct } = marketplace;
 export async function fetchProducts(){
   const [products,rows,health]=await Promise.all([marketplace.fetchProducts(),fetchAuctionRows(),supabase.rpc('auctions_health').then(result=>({...result,clock:serverClock(result.data?.server_time)}))]);

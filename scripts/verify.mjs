@@ -10,6 +10,8 @@ import { validateProduct, validateImage, validateProfile } from '../src/lib/vali
 import { validateConfig } from '../src/lib/config.js';
 import { confirmsDeletion } from '../src/lib/storage-result.js';
 import './marketplace-checks.mjs';
+import './product-detail-checks.mjs';
+import './environment-checks.mjs';
 import './check-sql.mjs';
 import './check-chat-sql.mjs';
 import './check-auction-sql.mjs';
@@ -53,7 +55,7 @@ assert.equal(confirmsDeletion({data: null, error: {message: 'denied'}}, 'owner/i
 
 assert.ok(validateConfig('', ''));
 assert.ok(validateConfig('https://example.supabase.co', 'sb_secret_never_use'));
-assert.equal(validateConfig('https://example.supabase.co', 'sb_publishable_test_only'), '');
+assert.ok(validateConfig('https://example.supabase.co', 'sb_publishable_test_only'));
 const valid = { title: 'Consola de prueba', description: 'Descripción para validar reglas del producto.', category: 'Consolas', condition: 'Buen estado', type: 'fixed', price: 1200, area: 'Centro' };
 assert.equal(validateProduct(valid).price, 1200);
 for (const invalid of [{price: -1}, {price: 1.5}, {price: 1000001}, {type: 'auction'}, {category: 'Otros'}, {area: 'Lugar inventado'}, {title: '   '}, {description: ''}]) assert.throws(() => validateProduct({...valid, ...invalid}));
@@ -103,6 +105,10 @@ console.log('OK: categoría, modalidad, precios, acentos, favoritos y ordenamien
 globalThis.window = { location: { hash: '', search: '' } };
 const server = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' });
 try {
+  assert.deepEqual(server.config.envPrefix, []);
+  assert.equal(server.config.envDir, false);
+  assert.deepEqual(Object.keys(server.config.env).filter(name => name.startsWith('VITE_')), []);
+  console.log('OK: Vite real no expone variables VITE_ automáticamente; solo constantes seleccionadas.');
   const [{default: App}, {HomePage}, {PublishPage}, {ProductPage}, {AuthPage}, {Layout}, backend] = await Promise.all([
     server.ssrLoadModule('/src/App.jsx'), server.ssrLoadModule('/src/pages/HomePage.jsx'),
     server.ssrLoadModule('/src/pages/PublishPage.jsx'), server.ssrLoadModule('/src/pages/ProductPage.jsx'),
@@ -127,9 +133,28 @@ try {
   assert.ok(!auctionForm.includes('contador es ilustrativo'));
   assert.ok(!publish.includes('Publicar en mi demo'));
   for (const mode of ['login','register','recover','reset']) assert.ok(render(AuthPage, { mode, navigate: noop }).includes('<form'));
+  assert.ok(render(AuthPage,{navigate:noop}).includes('El QR registra la entrega, no un pago.'));
+  const auctionCopy=await readFile('src/components/AuctionPanel.jsx','utf8');
+  assert.ok(auctionCopy.includes('La entrega puede registrarse mediante QR; ese registro no verifica un pago.'));
+  assert.ok(!auctionCopy.includes('la confirmación de entrega no están habilitados'));
   const fixture = {...initialProducts[0], ownerId: 'owner-test'};
   const detail = render(ProductPage, {...shared, product: fixture, user: {id: 'owner-test'}});
   const {SaleBadge,ProductCard}=await server.ssrLoadModule('/src/components/ProductCard.jsx');
+  const {ProductDetailPage,ProductDetailState}=await server.ssrLoadModule('/src/pages/ProductDetailPage.jsx');
+  const detailProps={...shared,user:null};
+  assert.ok(render(ProductDetailPage,{...detailProps,id:'10000000-0000-4000-8000-000000000001'}).includes('Consultando publicación'));
+  for(const status of ['invalid','not_found','restricted','error']){
+    const html=render(ProductDetailState,{...detailProps,state:{status,reason:'connection',refresh:noop}});
+    assert.ok(!html.includes('pudo haberse eliminado'));
+    assert.ok(!html.includes('Contactar al vendedor'));
+    assert.ok(html.includes('Volver al catálogo'));
+    if(status==='error'||status==='restricted')assert.ok(html.includes('Reintentar consulta')&&html.includes('role="alert"'));
+    if(status==='error')assert.ok(html.includes('No se pudo conectar'));
+    if(status==='restricted')assert.ok(html.includes('Iniciar sesión'));
+    if(status==='not_found')assert.ok(html.includes('visible con este enlace'));
+  }
+  assert.ok(render(ProductDetailState,{...detailProps,state:{status:'ready',product:fixture}}).includes(fixture.title));
+  console.log('OK: detalle independiente con carga, enlace inválido, ausencia neutral, acceso restringido, error recuperable y publicación visible.');
   // Regression: a sale mode must never become a positioning utility. The same
   // badge is shared by the catalog, publication preview and product detail.
   const positioningUtilities=new Set(['fixed','sticky','absolute','relative','static']);
@@ -150,11 +175,11 @@ try {
   for (const page of ['home','auctions','saved','publish','profile']) {
     const html = render(Layout, { page, navigate: noop, favoritesCount: 0, connected: false });
     assert.ok(html.includes('href="#'+page+'" aria-current="page"'));
-    assert.ok(html.includes('Plataforma en configuración.'));
+    assert.ok(html.includes('Catálogo sin conexión confirmada.'));
   }
   const app = render(App);
-  assert.ok(app.includes('Compras y pagos aún no disponibles.'));
-  assert.ok(!app.includes('Publicaciones conectadas a Supabase.'));
+  assert.ok(app.includes('Pagos digitales y transferencias deshabilitados.'));
+  assert.ok(!app.includes('Catálogo conectado a Supabase.'));
   const {MeetingPointsPage} = await server.ssrLoadModule('/src/pages/MeetingPointsPage.jsx');
   const points = render(MeetingPointsPage, {navigate: noop, onSelect: noop});
   assert.ok(points.includes('Cargando lugares desde Supabase'));

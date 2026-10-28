@@ -16,6 +16,8 @@ dist-ssr
 .env.local
 .env.test.local
 !.env.example
+!.env.lab.example
+.lab/
 
 # Private credentials and signing keys
 .git-credentials
@@ -56,3 +58,23 @@ supabase/.branches/
 *.njsproj
 *.sln
 *.sw?
+
+# Database backups and compressed exports (SQL migrations remain allowed)
+*.dump
+*.backup
+*.dump.*
+*.backup.*
+*.sql.gz
+*.sql.bz2
+*.sql.xz
+*.zip
+*.7z
+*.rar
+*.tar
+*.tgz
+*.gz
+*.bz2
+*.xz
+/backups/
+/Backups/
+/respaldos/

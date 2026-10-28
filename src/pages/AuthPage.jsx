@@ -36,7 +36,7 @@ export function AuthPage({ mode = 'login', navigate, user }) {
     } catch (failure) { setError(failure.message || 'No se pudo conectar con Supabase.'); }
     finally { setBusy(false); }
   }
-  return <section className="auth-panel"><LogIn size={30} /><h1>{title}</h1><p>Tu cuenta te permite publicar, conversar y participar en subastas. Las compras, cobros y ofertas negociables todavía no están disponibles.</p><form onSubmit={submit}>
+  return <section className="auth-panel"><LogIn size={30} /><h1>{title}</h1><p>Tu cuenta permite publicar, conversar, pujar y coordinar citas y entregas QR. El QR registra la entrega, no un pago. Las compras en línea, los pagos digitales y las ofertas negociables siguen deshabilitados.</p><form onSubmit={submit}>
     {mode === 'register' && <label>Nombre público<input value={name} onChange={(e) => setName(e.target.value)} autoComplete="nickname" minLength={2} maxLength={60} required /><small>Será visible en tu perfil y tus publicaciones. No uses información privada.</small></label>}
     {mode !== 'reset' && <label>Correo electrónico<input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} required /></label>}
     {mode !== 'recover' && <label>Contraseña<input type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'login' ? 1 : 12} maxLength={128} value={password} onChange={(e) => setPassword(e.target.value)} required />{mode !== 'login' && <small>Utiliza al menos 12 caracteres.</small>}</label>}

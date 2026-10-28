@@ -1,15 +1,14 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv } from 'vite'
-import { validateConfig } from './src/lib/config.js'
+import { defineConfig } from 'vite'
+import { loadClientEnvironment, assertLabServer } from './scripts/client-environment.mjs'
 
-// https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), 'VITE_')
-  if (Object.keys(env).some((key) => /SECRET|SERVICE_ROLE|PASSWORD|PRIVATE/.test(key))) {
-    throw new Error('Una variable VITE_ parece contener credenciales privadas. Retírala antes de iniciar o compilar.')
+export default defineConfig(({ mode, command, isPreview }) => {
+  const selected = loadClientEnvironment({ mode, command, isPreview })
+  return {
+    envDir: false,
+    envPrefix: [],
+    define: selected.define,
+    plugins: [react(), ...(selected.lab ? [{ name: 'pendejaditas-lab-isolation', configResolved: assertLabServer }] : [])],
+    ...(selected.lab ? { server: { host: '127.0.0.1', port: 5175, strictPort: true } } : {}),
   }
-  if (env.VITE_SUPABASE_PUBLISHABLE_KEY && validateConfig(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_PUBLISHABLE_KEY)) {
-    throw new Error('Configuración pública de Supabase inválida. Revisa .env.local sin usar claves secretas.')
-  }
-  return { plugins: [react()] }
 })
