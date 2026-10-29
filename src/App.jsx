@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { PublishPage } from './pages/PublishPage';
+import { EditProductPage } from './pages/EditProductPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { AuthPage } from './pages/AuthPage';
 import { EmptyState } from './components/EmptyState';
@@ -48,7 +49,6 @@ export default function App() {
     document.title = `${pageTitles[route.page]} | pendejaditas.`;
     document.getElementById('main-content')?.focus({ preventScroll: true });
   }, [route.page, route.id]);
-  const selected = catalog.products.find((product) => product.id === route.id);
   const shared = { favorites, toggleFavorite, openProduct, navigate };
   const loginPrompt = <EmptyState title="Tu cuenta abre la siguiente partida" description="Inicia sesión para publicar y administrar tus artículos." action="Iniciar sesión o registrarme" onAction={() => navigate('auth/login')} />;
   let content;
@@ -60,7 +60,8 @@ export default function App() {
   else if (route.page === 'meeting-points') content = <MeetingPointsPage selectedPlace={selectedPlace} onSelect={setSelectedPlace} navigate={navigate} user={auth.user} />;
   else if (route.page === 'appointments') content = auth.loading ? <p role="status">Recuperando sesión…</p> : !auth.user ? loginPrompt : <AppointmentsPage key={auth.user.id} user={auth.user} navigate={navigate} selectedPlace={selectedPlace} exchangeId={route.id} />;
   else if (route.page === 'profile' || route.page === 'seller') content = auth.loading ? <p role="status">Recuperando tu sesión…</p> : route.page === 'profile' && !auth.user ? loginPrompt : <ProfilePage key={route.id || auth.user?.id} user={auth.user} profileId={route.page === 'seller' ? route.id : auth.user?.id} products={catalog.products} favoritesCount={favoritesCount} onChange={catalog.refresh} onNotice={setNotice} {...shared} />;
-  else if (route.page === 'publish' || route.page === 'edit') content = auth.loading ? <p role="status">Recuperando tu sesión…</p> : !auth.user ? loginPrompt : !catalog.ready ? <p role="status">Configura o reconecta la base de datos para publicar.</p> : route.page === 'edit' && (!selected || selected.ownerId !== auth.user.id || selected.auction) ? <EmptyState title="No puedes editar esta publicación" description="Solo puedes modificar artículos propios que no estén vinculados a una subasta. Sus reglas y contenido quedan fijos." action="Ir a mi perfil" onAction={() => navigate('profile')} /> : <PublishPage key={selected?.id || 'new'} existing={route.page === 'edit' ? selected : null} onPublish={async ({ product, cleanupWarning }) => { await catalog.refresh(); navigate(productRoute(product.id)); if (cleanupWarning) setNotice('Publicación guardada. La fotografía anterior quedó pendiente de limpieza en Storage.'); }} />;
+  else if (route.page === 'edit') content = auth.loading ? <p role="status">Recuperando tu sesión…</p> : !auth.user ? loginPrompt : <EditProductPage key={`${auth.user.id}-${route.id}`} id={route.id} user={auth.user} navigate={navigate} onPublish={async ({ product, cleanupWarning }) => { await catalog.refresh(); navigate(productRoute(product.id)); if (cleanupWarning) setNotice('Publicación guardada. La fotografía anterior quedó pendiente de limpieza en Storage.'); }} />;
+  else if (route.page === 'publish') content = auth.loading ? <p role="status">Recuperando tu sesión…</p> : !auth.user ? loginPrompt : !catalog.ready ? <p role="status">Configura o reconecta la base de datos para publicar.</p> : <PublishPage key="new" onPublish={async ({ product, cleanupWarning }) => { await catalog.refresh(); navigate(productRoute(product.id)); if (cleanupWarning) setNotice('Publicación guardada. La fotografía anterior quedó pendiente de limpieza en Storage.'); }} />;
   else if (route.page === 'product') content = <ProductDetailPage key={`${route.id || 'invalid'}-${auth.user?.id || 'anonymous'}`} id={route.id} user={auth.user} {...shared} />;
   else content = <HomePage key={route.page} products={catalog.products} loading={catalog.loading} connected={catalog.ready} mode={route.page === 'saved' ? 'saved' : route.page === 'auctions' ? 'auctions' : 'home'} {...shared} />;
   return <Layout page={route.page} user={auth.user} connected={catalog.ready} navigate={navigate} unread={inbox.unread} favoritesCount={favoritesCount}>
